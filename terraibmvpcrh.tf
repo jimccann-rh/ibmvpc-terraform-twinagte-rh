@@ -117,6 +117,12 @@ variable "use_internal_subnet" {
   default     = true
 }
 
+variable "dns_servers" {
+  description = "List of DNS server IP addresses for VPC"
+  type        = list(string)
+  default     = ["10.130.64.4", "10.130.64.70", "10.130.64.134"]
+}
+
 # Data sources
 data "ibm_resource_group" "resource_group" {
   name = var.resource_group
@@ -144,6 +150,24 @@ resource "ibm_is_vpc" "twingate_vpc" {
     "connector",
     "terraform"
   ]
+}
+
+# Configure VPC DNS resolver with custom DNS servers
+resource "ibm_is_vpc_dns_resolver" "twingate_dns_resolver" {
+  vpc_id = ibm_is_vpc.twingate_vpc.id
+  type   = "manual"
+  
+  manual_servers {
+    address = var.dns_servers[0]
+  }
+  
+  manual_servers {
+    address = var.dns_servers[1]
+  }
+  
+  manual_servers {
+    address = var.dns_servers[2]
+  }
 }
 
 # Create VPC address prefix for custom IP range
@@ -705,6 +729,11 @@ output "debug_commands" {
 output "floating_ip_enabled" {
   description = "Whether floating IP is enabled for the instance"
   value       = var.enable_floating_ip
+}
+
+output "dns_servers_configured" {
+  description = "DNS servers configured for the VPC"
+  value       = var.dns_servers
 }
 
 # Second VSI Outputs

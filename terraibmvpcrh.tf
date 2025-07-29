@@ -99,6 +99,18 @@ variable "vpc_address_prefix_cidr" {
   default     = "10.130.81.16/28"
 }
 
+variable "internal_subnet_name" {
+  description = "Name for the internal subnet"
+  type        = string
+  default     = "rh-internal"
+}
+
+variable "internal_subnet_cidr" {
+  description = "CIDR block for the internal subnet"
+  type        = string
+  default     = "10.130.81.16/29"
+}
+
 # Data sources
 data "ibm_resource_group" "resource_group" {
   name = var.resource_group
@@ -147,6 +159,21 @@ resource "ibm_is_subnet" "twingate_subnet" {
   tags = [
     "twingate",
     "connector",
+    "terraform"
+  ]
+}
+
+# Create internal subnet
+resource "ibm_is_subnet" "internal_subnet" {
+  name           = var.internal_subnet_name
+  vpc            = ibm_is_vpc.twingate_vpc.id
+  zone           = var.zone
+  resource_group = data.ibm_resource_group.resource_group.id
+  ipv4_cidr_block = var.internal_subnet_cidr
+
+  tags = [
+    "internal",
+    "rh",
     "terraform"
   ]
 }

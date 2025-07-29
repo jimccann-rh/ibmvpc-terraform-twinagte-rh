@@ -134,12 +134,6 @@ resource "ibm_is_vpc_address_prefix" "twingate_address_prefix" {
   vpc  = ibm_is_vpc.twingate_vpc.id
   zone = var.zone
   cidr = var.vpc_address_prefix_cidr
-
-  tags = [
-    "twingate",
-    "connector",
-    "terraform"
-  ]
 }
 
 # Create subnet

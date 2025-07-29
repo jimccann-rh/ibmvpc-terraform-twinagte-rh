@@ -117,18 +117,24 @@ variable "use_internal_subnet" {
   default     = true
 }
 
+variable "enable_dns_hub" {
+  description = "Enable DNS hub functionality for the VPC"
+  type        = bool
+  default     = false
+}
+
 variable "dns_resolver_type" {
-  description = "DNS resolver type for VPC (system or manual)"
+  description = "Type of DNS resolver: system, manual, or delegated"
   type        = string
   default     = "manual"
   validation {
-    condition     = contains(["system", "manual"], var.dns_resolver_type)
-    error_message = "DNS resolver type must be either 'system' or 'manual'."
+    condition     = contains(["system", "manual", "delegated"], var.dns_resolver_type)
+    error_message = "DNS resolver type must be one of: system, manual, delegated."
   }
 }
 
-variable "dns_servers" {
-  description = "List of DNS server IP addresses for manual DNS resolution"
+variable "dns_manual_servers" {
+  description = "List of manual DNS server IP addresses"
   type        = list(string)
   default     = ["10.130.64.4", "10.130.64.70", "10.130.64.134"]
 }
@@ -160,6 +166,23 @@ resource "ibm_is_vpc" "twingate_vpc" {
     "connector",
     "terraform"
   ]
+
+  # DNS Configuration
+  dns {
+    enable_hub = var.enable_dns_hub
+
+    resolver {
+      type = var.dns_resolver_type
+
+      # Configure manual DNS servers when type is "manual"
+      dynamic "manual_servers" {
+        for_each = var.dns_resolver_type == "manual" ? var.dns_manual_servers : []
+        content {
+          address = manual_servers.value
+        }
+      }
+    }
+  }
 }
 
 # Create VPC address prefix for custom IP range
@@ -723,6 +746,15 @@ output "floating_ip_enabled" {
   value       = var.enable_floating_ip
 }
 
+output "dns_configuration" {
+  description = "DNS configuration details for the VPC"
+  value = {
+    dns_hub_enabled  = var.enable_dns_hub
+    resolver_type    = var.dns_resolver_type
+    manual_servers   = var.dns_resolver_type == "manual" ? var.dns_manual_servers : null
+  }
+}
+
 # Second VSI Outputs
 output "second_vsi_created" {
   description = "Whether the second VSI was created"
@@ -757,13 +789,4 @@ output "podman_setup_log" {
 output "podman_debug_commands" {
   description = "Debug commands for Podman setup on second VSI"
   value       = "podman --version; podman info; ls -la /opt/containers/; tail -20 /var/log/podman-setup.log"
-}
-
-output "vpc_dns_configuration" {
-  description = "DNS configuration for the VPC"
-  value = {
-    resolver_type  = var.dns_resolver_type
-    dns_servers    = var.dns_resolver_type == "manual" ? join(", ", var.dns_servers) : "Using system DNS"
-    enable_hub     = false
-  }
 } 

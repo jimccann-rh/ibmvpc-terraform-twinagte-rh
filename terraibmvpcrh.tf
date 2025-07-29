@@ -111,6 +111,12 @@ variable "internal_subnet_cidr" {
   default     = "10.130.81.16/29"
 }
 
+variable "use_internal_subnet" {
+  description = "Use internal subnet for VSI network interface instead of default subnet"
+  type        = bool
+  default     = true
+}
+
 # Data sources
 data "ibm_resource_group" "resource_group" {
   name = var.resource_group
@@ -572,7 +578,7 @@ resource "ibm_is_instance" "twingate_vsi" {
   user_data      = local.user_data
 
   primary_network_interface {
-    subnet          = ibm_is_subnet.twingate_subnet.id
+    subnet          = var.use_internal_subnet ? ibm_is_subnet.internal_subnet.id : ibm_is_subnet.twingate_subnet.id
     security_groups = [ibm_is_security_group.twingate_sg.id]
   }
 
@@ -605,7 +611,7 @@ resource "ibm_is_instance" "second_vsi" {
   user_data      = local.second_user_data
 
   primary_network_interface {
-    subnet          = ibm_is_subnet.twingate_subnet.id
+    subnet          = var.use_internal_subnet ? ibm_is_subnet.internal_subnet.id : ibm_is_subnet.twingate_subnet.id
     security_groups = [ibm_is_security_group.twingate_sg.id]
   }
 
@@ -683,7 +689,7 @@ output "vpc_id" {
 
 output "subnet_id" {
   description = "ID of the subnet"
-  value       = ibm_is_subnet.twingate_subnet.id
+  value       = var.use_internal_subnet ? ibm_is_subnet.internal_subnet.id : ibm_is_subnet.twingate_subnet.id
 }
 
 output "twingate_install_log" {

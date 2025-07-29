@@ -155,13 +155,6 @@ resource "ibm_is_vpc" "twingate_vpc" {
   default_routing_table_name  = "${var.instance_name}-default-rt"
   default_security_group_name = "${var.instance_name}-default-sg"
 
-  # DNS configuration for manual DNS resolution
-  dns {
-    enable_hub      = false
-    resolver_type   = var.dns_resolver_type
-    manual_servers  = var.dns_resolver_type == "manual" ? var.dns_servers : null
-  }
-
   tags = [
     "twingate",
     "connector",
@@ -770,7 +763,7 @@ output "vpc_dns_configuration" {
   description = "DNS configuration for the VPC"
   value = {
     resolver_type  = var.dns_resolver_type
-    dns_servers    = var.dns_resolver_type == "manual" ? var.dns_servers : "Using system DNS"
-    enable_hub     = true
+    dns_servers    = var.dns_resolver_type == "manual" ? join(", ", var.dns_servers) : "Using system DNS"
+    enable_hub     = false
   }
 } 

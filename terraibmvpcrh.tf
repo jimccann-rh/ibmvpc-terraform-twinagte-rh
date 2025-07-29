@@ -176,6 +176,9 @@ resource "ibm_is_subnet" "internal_subnet" {
     "rh",
     "terraform"
   ]
+
+  # Ensure the subnet is created after the address prefix
+  depends_on = [ibm_is_vpc_address_prefix.twingate_address_prefix]
 }
 
 # Create security group

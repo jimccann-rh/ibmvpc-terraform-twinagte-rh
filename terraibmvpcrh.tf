@@ -633,6 +633,9 @@ runcmd:
   ${var.configure_systemd_resolved ? "- 'echo \"DNS=10.130.64.4\" >> /etc/systemd/resolved.conf'" : ""}
   ${var.configure_systemd_resolved ? "- 'echo \"Domains=~redhat.com\" >> /etc/systemd/resolved.conf'" : ""}
   ${var.configure_systemd_resolved ? "- 'systemctl restart systemd-resolved'" : ""}
+  ${var.configure_systemd_resolved ? "- 'cp /etc/resolv.conf /etc/resolv.conf.backup'" : ""}
+  ${var.configure_systemd_resolved ? "- 'echo \"server 127.0.0.53\" > /etc/resolv.conf'" : ""}
+  ${var.configure_systemd_resolved ? "- 'echo \"$(date): Updated /etc/resolv.conf with local resolver\" >> /var/log/podman-setup.log'" : ""}
   ${var.configure_systemd_resolved ? "- 'echo \"$(date): Systemd resolved configuration completed\" >> /var/log/podman-setup.log'" : ""}
   
   # Log cloud-init completion
@@ -866,5 +869,5 @@ output "podman_debug_commands" {
 
 output "systemd_resolved_debug_commands" {
   description = "Debug commands for systemd resolved configuration on second VSI"
-  value       = var.configure_systemd_resolved ? "systemctl status systemd-resolved; cat /etc/systemd/resolved.conf; resolvectl status" : "Systemd resolved configuration is disabled"
+  value       = var.configure_systemd_resolved ? "systemctl status systemd-resolved; cat /etc/systemd/resolved.conf; cat /etc/resolv.conf; resolvectl status" : "Systemd resolved configuration is disabled"
 } 

@@ -635,6 +635,7 @@ runcmd:
   ${var.configure_systemd_resolved ? "- 'systemctl restart systemd-resolved'" : ""}
   ${var.configure_systemd_resolved ? "- 'cp /etc/resolv.conf /etc/resolv.conf.backup'" : ""}
   ${var.configure_systemd_resolved ? "- 'echo \"nameserver 127.0.0.53\" > /etc/resolv.conf'" : ""}
+  ${var.configure_systemd_resolved ? "- 'chattr +i /etc/resolv.conf'" : ""}
   ${var.configure_systemd_resolved ? "- 'echo \"$(date): Updated /etc/resolv.conf with local resolver\" >> /var/log/podman-setup.log'" : ""}
   ${var.configure_systemd_resolved ? "- 'echo \"$(date): Systemd resolved configuration completed\" >> /var/log/podman-setup.log'" : ""}
   

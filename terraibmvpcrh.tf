@@ -435,6 +435,8 @@ packages:
   - git
   - tmux
   - systemd-resolved
+  - bind-utils
+  - iputils
   
 write_files:
   - path: /tmp/podman-setup-debug.log

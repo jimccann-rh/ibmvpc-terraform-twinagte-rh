@@ -434,6 +434,7 @@ packages:
   - wget
   - git
   - tmux
+  - systemd-resolved
   
 write_files:
   - path: /tmp/podman-setup-debug.log

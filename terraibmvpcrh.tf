@@ -111,10 +111,16 @@ variable "internal_subnet_cidr" {
   default     = "10.130.81.16/29"
 }
 
-variable "use_internal_subnet" {
-  description = "Use internal subnet for VSI network interface instead of default subnet"
+variable "use_internal_subnet_main_vsi" {
+  description = "Use internal subnet for main VSI network interface instead of default subnet"
   type        = bool
   default     = true
+}
+
+variable "use_internal_subnet_second_vsi" {
+  description = "Use internal subnet for second VSI network interface instead of default subnet"
+  type        = bool
+  default     = false
 }
 
 variable "enable_dns_hub" {
@@ -630,7 +636,7 @@ resource "ibm_is_instance" "twingate_vsi" {
   user_data      = local.user_data
 
   primary_network_interface {
-    subnet          = var.use_internal_subnet ? ibm_is_subnet.internal_subnet.id : ibm_is_subnet.twingate_subnet.id
+    subnet          = var.use_internal_subnet_main_vsi ? ibm_is_subnet.internal_subnet.id : ibm_is_subnet.twingate_subnet.id
     security_groups = [ibm_is_security_group.twingate_sg.id]
   }
 
@@ -666,7 +672,7 @@ resource "ibm_is_instance" "second_vsi" {
   user_data      = local.second_user_data
 
   primary_network_interface {
-    subnet          = var.use_internal_subnet ? ibm_is_subnet.internal_subnet.id : ibm_is_subnet.twingate_subnet.id
+    subnet          = var.use_internal_subnet_second_vsi ? ibm_is_subnet.internal_subnet.id : ibm_is_subnet.twingate_subnet.id
     security_groups = [ibm_is_security_group.twingate_sg.id]
   }
 
@@ -745,9 +751,14 @@ output "vpc_id" {
   value       = ibm_is_vpc.twingate_vpc.id
 }
 
-output "subnet_id" {
-  description = "ID of the subnet"
-  value       = var.use_internal_subnet ? ibm_is_subnet.internal_subnet.id : ibm_is_subnet.twingate_subnet.id
+output "main_vsi_subnet_id" {
+  description = "ID of the subnet used by the main VSI"
+  value       = var.use_internal_subnet_main_vsi ? ibm_is_subnet.internal_subnet.id : ibm_is_subnet.twingate_subnet.id
+}
+
+output "second_vsi_subnet_id" {
+  description = "ID of the subnet used by the second VSI (if created)"
+  value       = var.create_second_vsi ? (var.use_internal_subnet_second_vsi ? ibm_is_subnet.internal_subnet.id : ibm_is_subnet.twingate_subnet.id) : "Not created"
 }
 
 output "twingate_install_log" {
@@ -777,6 +788,16 @@ output "dns_configuration" {
 output "internal_subnet_gateway_attached" {
   description = "Whether the internal subnet is attached to the public gateway"
   value       = var.attach_internal_subnet_to_gateway
+}
+
+output "main_vsi_uses_internal_subnet" {
+  description = "Whether the main VSI is using the internal subnet"
+  value       = var.use_internal_subnet_main_vsi
+}
+
+output "second_vsi_uses_internal_subnet" {
+  description = "Whether the second VSI is using the internal subnet (if created)"
+  value       = var.create_second_vsi ? var.use_internal_subnet_second_vsi : "Not applicable - second VSI not created"
 }
 
 # Second VSI Outputs

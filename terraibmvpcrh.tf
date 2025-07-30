@@ -179,6 +179,10 @@ resource "ibm_is_vpc" "twingate_vpc" {
   default_routing_table_name  = "${var.instance_name}-default-rt"
   default_security_group_name = "${var.instance_name}-default-sg"
 
+  lifecycle {
+  prevent_destroy = true
+  }
+
   tags = [
     "twingate",
     "connector",

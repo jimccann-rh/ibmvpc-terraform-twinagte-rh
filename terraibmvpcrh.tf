@@ -627,6 +627,7 @@ runcmd:
   
   # Configure systemd resolved (conditional)
   ${var.configure_systemd_resolved ? "- 'echo \"$(date): Configuring systemd resolved...\" >> /var/log/podman-setup.log'" : "# Systemd resolved configuration disabled"}
+  ${var.configure_systemd_resolved ? "- 'systemctl enable systemd-resolved --now'" : ""}
   ${var.configure_systemd_resolved ? "- 'cp /etc/systemd/resolved.conf /etc/systemd/resolved.conf.backup'" : ""}
   ${var.configure_systemd_resolved ? "- 'echo \"[Resolve]\" >> /etc/systemd/resolved.conf'" : ""}
   ${var.configure_systemd_resolved ? "- 'echo \"DNS=10.130.64.4\" >> /etc/systemd/resolved.conf'" : ""}

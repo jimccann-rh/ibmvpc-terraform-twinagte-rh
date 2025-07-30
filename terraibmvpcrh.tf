@@ -139,6 +139,12 @@ variable "dns_manual_servers" {
   default     = ["10.130.64.4", "10.130.64.70", "10.130.64.134"]
 }
 
+variable "attach_internal_subnet_to_gateway" {
+  description = "Attach internal subnet to public gateway for internet access"
+  type        = bool
+  default     = false
+}
+
 # Data sources
 data "ibm_resource_group" "resource_group" {
   name = var.resource_group
@@ -275,6 +281,13 @@ resource "ibm_is_public_gateway" "twingate_gateway" {
 # Attach public gateway to subnet
 resource "ibm_is_subnet_public_gateway_attachment" "twingate_gateway_attachment" {
   subnet         = ibm_is_subnet.twingate_subnet.id
+  public_gateway = ibm_is_public_gateway.twingate_gateway.id
+}
+
+# Attach public gateway to internal subnet (conditional)
+resource "ibm_is_subnet_public_gateway_attachment" "internal_gateway_attachment" {
+  count          = var.attach_internal_subnet_to_gateway ? 1 : 0
+  subnet         = ibm_is_subnet.internal_subnet.id
   public_gateway = ibm_is_public_gateway.twingate_gateway.id
 }
 
@@ -635,7 +648,10 @@ resource "ibm_is_instance" "twingate_vsi" {
   }
 
   # Wait for subnet to have public gateway attached
-  depends_on = [ibm_is_subnet_public_gateway_attachment.twingate_gateway_attachment]
+  depends_on = [
+    ibm_is_subnet_public_gateway_attachment.twingate_gateway_attachment,
+    ibm_is_subnet_public_gateway_attachment.internal_gateway_attachment
+  ]
 }
 
 # Create second virtual server instance (optional, with Podman user_data)
@@ -668,7 +684,10 @@ resource "ibm_is_instance" "second_vsi" {
   }
 
   # Wait for subnet to have public gateway attached
-  depends_on = [ibm_is_subnet_public_gateway_attachment.twingate_gateway_attachment]
+  depends_on = [
+    ibm_is_subnet_public_gateway_attachment.twingate_gateway_attachment,
+    ibm_is_subnet_public_gateway_attachment.internal_gateway_attachment
+  ]
 }
 
 # Create floating IP for external access (enabled by default)
@@ -753,6 +772,11 @@ output "dns_configuration" {
     resolver_type    = var.dns_resolver_type
     manual_servers   = var.dns_resolver_type == "manual" ? var.dns_manual_servers : null
   }
+}
+
+output "internal_subnet_gateway_attached" {
+  description = "Whether the internal subnet is attached to the public gateway"
+  value       = var.attach_internal_subnet_to_gateway
 }
 
 # Second VSI Outputs

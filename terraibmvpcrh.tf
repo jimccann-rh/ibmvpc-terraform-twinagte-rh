@@ -151,6 +151,12 @@ variable "attach_internal_subnet_to_gateway" {
   default     = false
 }
 
+variable "configure_systemd_resolved" {
+  description = "Configure systemd resolved.conf on second VSI for custom DNS settings"
+  type        = bool
+  default     = false
+}
+
 # Data sources
 data "ibm_resource_group" "resource_group" {
   name = var.resource_group
@@ -612,6 +618,15 @@ runcmd:
   - 'echo "$(date): Executing podman setup script..." >> /var/log/podman-setup.log'
   - '/opt/podman-setup.sh'
   
+  # Configure systemd resolved (conditional)
+  ${var.configure_systemd_resolved ? "- 'echo \"$(date): Configuring systemd resolved...\" >> /var/log/podman-setup.log'" : "# Systemd resolved configuration disabled"}
+  ${var.configure_systemd_resolved ? "- 'cp /etc/systemd/resolved.conf /etc/systemd/resolved.conf.backup'" : ""}
+  ${var.configure_systemd_resolved ? "- 'echo \"[Resolve]\" >> /etc/systemd/resolved.conf'" : ""}
+  ${var.configure_systemd_resolved ? "- 'echo \"DNS=10.130.64.4\" >> /etc/systemd/resolved.conf'" : ""}
+  ${var.configure_systemd_resolved ? "- 'echo \"Domains=~redhat.com\" >> /etc/systemd/resolved.conf'" : ""}
+  ${var.configure_systemd_resolved ? "- 'systemctl restart systemd-resolved'" : ""}
+  ${var.configure_systemd_resolved ? "- 'echo \"$(date): Systemd resolved configuration completed\" >> /var/log/podman-setup.log'" : ""}
+  
   # Log cloud-init completion
   - 'echo "$(date): Podman setup runcmd section completed" >> /var/log/podman-setup.log'
   
@@ -800,6 +815,11 @@ output "second_vsi_uses_internal_subnet" {
   value       = var.create_second_vsi ? var.use_internal_subnet_second_vsi : "Not applicable - second VSI not created"
 }
 
+output "systemd_resolved_configured" {
+  description = "Whether systemd resolved is configured on second VSI"
+  value       = var.create_second_vsi ? var.configure_systemd_resolved : "Not applicable - second VSI not created"
+}
+
 # Second VSI Outputs
 output "second_vsi_created" {
   description = "Whether the second VSI was created"
@@ -834,4 +854,9 @@ output "podman_setup_log" {
 output "podman_debug_commands" {
   description = "Debug commands for Podman setup on second VSI"
   value       = "podman --version; podman info; ls -la /opt/containers/; tail -20 /var/log/podman-setup.log"
+}
+
+output "systemd_resolved_debug_commands" {
+  description = "Debug commands for systemd resolved configuration on second VSI"
+  value       = var.configure_systemd_resolved ? "systemctl status systemd-resolved; cat /etc/systemd/resolved.conf; resolvectl status" : "Systemd resolved configuration is disabled"
 } 

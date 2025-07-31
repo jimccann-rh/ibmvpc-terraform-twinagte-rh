@@ -463,7 +463,7 @@ write_files:
 
       # Update package manager and install packages
       RUN dnf update -y && \
-          dnf install -y iputils python3 python3-devel python3-pip gcc curl git tmux python3-virtualenv && \
+          dnf install -y iputils bind-utils python3 python3-devel python3-pip gcc curl git tmux python3-virtualenv && \
           dnf clean all
 
       # Install Poetry using the official installer

@@ -452,7 +452,7 @@ write_files:
     owner: root:root
     content: |
       #podman build -t localhost/fedora-dev:latest -f Dockerfile .
-      podman run -ti -e VAULT_ADDR='' -e VAULT_TOKEN='' -e GITHUB_PAT="github_pat_***" -e REQUESTS_CA_BUNDLE="/workspace/ca-bundle.crt -v /opt/ca-bundle.crt:/workspace/ca-bundle.crt --rm --replace --name rota-jimccann localhost/fedora-dev:latest tmux
+      podman run -ti -e VAULT_ADDR='' -e VAULT_TOKEN='' -e GITHUB_PAT="github_pat_***" -e REQUESTS_CA_BUNDLE="/workspace/ca-bundle.crt" -v /opt/ca-bundle.crt:/workspace/ca-bundle.crt --rm --replace --name rota-jimccann localhost/fedora-dev:latest tmux
            
   - path: /opt/Dockerfile
     permissions: '0644'
@@ -523,13 +523,7 @@ write_files:
       echo "Repository setup complete!"
       echo "Available repository:"
       ls -la /workspace/
-
-      # Clean up credentials for security
-      rm -f ~/.git-credentials
-      git config --global --unset credential.helper
-
-      echo "Git credentials cleaned up for security."
-
+      
       # Clone the config repository
       if [ ! -d "config" ]; then
           echo "Cloning config..."

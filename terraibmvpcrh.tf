@@ -556,6 +556,7 @@ write_files:
       echo "run . .venv/bin/activate"
       echo "run deactivate to exit out of venv"
       #echo "run ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py"
+      echo " run ./infra-toolbox/apps/support-toolkit/github/acl.py listteams"
       
   - path: /opt/podman-setup.sh
     permissions: '0755'

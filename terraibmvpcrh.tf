@@ -452,7 +452,7 @@ write_files:
     owner: root:root
     content: |
       #podman build -t localhost/fedora-dev:latest -f Dockerfile .
-      podman run -ti -e GITHUB_PAT="github_pat_***" --rm --replace --name rota-jimccann localhost/fedora-dev:latest tmux
+      podman run -ti -e VAULT_ADDR='' -e VAULT_TOKEN='' -e GITHUB_PAT="github_pat_***" -e REQUESTS_CA_BUNDLE="/workspace/ca-bundle.crt -v /opt/ca-bundle.crt:/workspace/ca-bundle.crt --rm --replace --name rota-jimccann localhost/fedora-dev:latest tmux
            
   - path: /opt/Dockerfile
     permissions: '0644'
@@ -529,6 +529,26 @@ write_files:
       git config --global --unset credential.helper
 
       echo "Git credentials cleaned up for security."
+
+      # Clone the config repository
+      if [ ! -d "config" ]; then
+          echo "Cloning config..."
+          git clone https://github.com/jimccann-rh/config.git
+      else
+          echo "config already exists, pulling latest changes..."
+          cd config && git pull && cd ..
+      fi
+      
+      echo "Repository setup complete!"
+      echo "Available repository:"
+      ls -la /workspace/
+      
+      # Clean up credentials for security
+      rm -f ~/.git-credentials
+      git config --global --unset credential.helper
+      
+      echo "Git credentials cleaned up for security." 
+
       python3 -m venv .venv
       . .venv/bin/activate
       cd /workspace/infra-toolbox/apps/support-toolkit
@@ -536,6 +556,8 @@ write_files:
       echo "run . .venv/bin/activate"
       echo "run deactivate to exit out of venv"
 
+      ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py
+      
   - path: /opt/podman-setup.sh
     permissions: '0755'
     owner: root:root
@@ -589,7 +611,7 @@ write_files:
         podman build -t localhost/fedora-dev:latest -f Dockerfile . >> "$LOG_FILE" 2>&1
         echo "$(date): Container build completed" >> "$LOG_FILE"
         
-        echo "podman run -ti -e GITHUB_PAT="github_pat_***" --rm --replace --name rota-jimccann localhost/fedora-dev:latest" >> "$LOG_FILE"
+        echo "podman run -ti -e VAULT_ADDR='' -e VAULT_TOKEN='' -e GITHUB_PAT="github_pat_***" --rm --replace --name rota-jimccann localhost/fedora-dev:latest" >> "$LOG_FILE"
       
       else
         echo "$(date): Dockerfile not found" >> "$LOG_FILE"

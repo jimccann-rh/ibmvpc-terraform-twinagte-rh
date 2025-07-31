@@ -452,7 +452,7 @@ write_files:
     owner: root:root
     content: |
       #podman build -t localhost/fedora-dev:latest -f Dockerfile .
-      podman run -ti -e VAULT_ADDR='' -e VAULT_TOKEN='' -e GITHUB_PAT="github_pat_***" -e REQUESTS_CA_BUNDLE="/workspace/ca-bundle.crt" -v /opt/ca-bundle.crt:/workspace/ca-bundle.crt --rm --replace --name rota-jimccann localhost/fedora-dev:latest tmux
+      podman run -ti -e VAULT_ADDR='' -e VAULT_TOKEN='' -e GITHUB_PAT="github_pat_***" -e REQUESTS_CA_BUNDLE="/workspace/ca-bundle.crt" -v /opt/:/workspace/ --rm --replace --name rota-jimccann localhost/fedora-dev:latest tmux
            
   - path: /opt/Dockerfile
     permissions: '0644'
@@ -541,7 +541,13 @@ write_files:
       rm -f ~/.git-credentials
       git config --global --unset credential.helper
       
-      echo "Git credentials cleaned up for security." 
+      echo "Git credentials cleaned up for security."
+
+      ln -s /workspace/config/ /root/dev/repos/config
+
+      echo "make sure you have copied PEM files to /opt "
+      cp *.pem /etc/pki/ca-trust/source/anchors/
+      update-ca-trust
 
       python3 -m venv .venv
       . .venv/bin/activate
@@ -549,8 +555,7 @@ write_files:
       poetry install --no-root
       echo "run . .venv/bin/activate"
       echo "run deactivate to exit out of venv"
-
-      ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py
+      echo "run ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py"
       
   - path: /opt/podman-setup.sh
     permissions: '0755'

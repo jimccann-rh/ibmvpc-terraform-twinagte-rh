@@ -542,10 +542,10 @@ write_files:
       git config --global --unset credential.helper
       
       echo "Git credentials cleaned up for security."
-
+      mkdir -p /root/dev/repos/
       ln -s /workspace/config/ /root/dev/repos/config
 
-      echo "make sure you have copied PEM files to /opt "
+      echo "Make sure you have copied PEM/CRT files to /opt "
       cp *.pem /etc/pki/ca-trust/source/anchors/
       update-ca-trust
 
@@ -555,7 +555,7 @@ write_files:
       poetry install --no-root
       echo "run . .venv/bin/activate"
       echo "run deactivate to exit out of venv"
-      echo "run ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py"
+      #echo "run ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py"
       
   - path: /opt/podman-setup.sh
     permissions: '0755'

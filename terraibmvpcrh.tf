@@ -451,8 +451,9 @@ write_files:
     permissions: '0744'
     owner: root:root
     content: |
-      #podman build -t localhost/fedora-dev:latest -f Dockerfile .
-      podman run -ti -e VAULT_ADDR='' -e VAULT_TOKEN='' -e GITHUB_PAT="github_pat_***" -e REQUESTS_CA_BUNDLE="/workspace/ca-bundle.crt" -v /opt/:/workspace/ --rm --replace --name rota-jimccann localhost/fedora-dev:latest tmux
+      # podman build -t localhost/fedora-dev:latest -f Dockerfile .
+      # If need be get information below from bitwarden
+      podman run -ti -e VAULT_ADDR='' -e VAULT_TOKEN='' -e GITHUB_PAT="github_pat_***" -e REQUESTS_CA_BUNDLE="/root/ca-bundle.crt" -v /opt/:/root/ --rm --replace --name rota-jimccann localhost/fedora-dev:latest tmux
            
   - path: /opt/Dockerfile
     permissions: '0644'
@@ -470,13 +471,13 @@ write_files:
       RUN curl -sSL https://install.python-poetry.org | python3 - && \
           ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
-      # Create workspace directory
-      RUN mkdir -p /workspace
+      # Create root directory
+      RUN mkdir -p /root
 
 
       # Copy the repository setup script (to be run at runtime with environment variable)
-      COPY setup-repos.sh /workspace/setup-repos.sh
-      RUN chmod +x /workspace/setup-repos.sh
+      COPY setup-repos.sh /root/setup-repos.sh
+      RUN chmod +x /root/setup-repos.sh
       
       # Verify installations
       RUN python3 --version && \
@@ -485,7 +486,7 @@ write_files:
           ping -c 1 -W 1 127.0.0.1 || echo "Ping test completed"
 
       # Set working directory
-      WORKDIR /workspace
+      WORKDIR /root
 
       # Set a default command
       CMD ["/bin/bash"] 
@@ -522,7 +523,7 @@ write_files:
 
       echo "Repository setup complete!"
       echo "Available repository:"
-      ls -la /workspace/
+      ls -la /root/
       
       # Clone the config repository
       if [ ! -d "config" ]; then
@@ -535,7 +536,7 @@ write_files:
       
       echo "Repository setup complete!"
       echo "Available repository:"
-      ls -la /workspace/
+      ls -la /root/
       
       # Clean up credentials for security
       rm -f ~/.git-credentials
@@ -543,7 +544,7 @@ write_files:
       
       echo "Git credentials cleaned up for security."
       mkdir -p /root/dev/repos/
-      ln -s /workspace/config/ /root/dev/repos/config
+      ln -s /root/config/ /root/dev/repos/config
 
       echo "Make sure you have copied PEM/CRT files to /opt "
       cp *.pem /etc/pki/ca-trust/source/anchors/
@@ -551,12 +552,13 @@ write_files:
 
       python3 -m venv .venv
       . .venv/bin/activate
-      cd /workspace/infra-toolbox/apps/support-toolkit
+      cd /root/infra-toolbox/apps/support-toolkit
+      
       poetry install --no-root
       echo "run . .venv/bin/activate"
-      echo "run deactivate to exit out of venv"
-      #echo "run ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py"
+      echo " run ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py"
       echo " run ./infra-toolbox/apps/support-toolkit/github/acl.py listteams"
+      echo "run deactivate to exit out of venv"
       
   - path: /opt/podman-setup.sh
     permissions: '0755'

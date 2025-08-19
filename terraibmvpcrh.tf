@@ -549,17 +549,19 @@ write_files:
       echo "Make sure you have copied PEM/CRT files to /opt "
       cp *.pem /etc/pki/ca-trust/source/anchors/
       update-ca-trust
+      
+      git config --global user.email "your_email@example.com"
 
       python3 -m venv .venv
       . .venv/bin/activate
       cd /workspace/infra-toolbox/apps/support-toolkit
       
       poetry install --no-root
+      ./support/xfer_secrets_from_vault_to_local_filesystem.py
+
       echo "run . .venv/bin/activate"
       echo " run cd /workspace/infra-toolbox/apps/support-toolkit"
-      echo " run ./support/xfer_secrets_from_vault_to_local_filesystem.py"
       echo "run deactivate to exit out of venv"
-      #echo "run ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py"
       echo " run ./infra-toolbox/apps/support-toolkit/github/acl.py listteams"
       
   - path: /opt/podman-setup.sh

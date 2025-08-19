@@ -629,6 +629,8 @@ write_files:
       echo "========================================" >> "$LOG_FILE"
 
 runcmd:
+  # add dns entry for local VAULT
+  - 'echo "10.2.69.250 vault.dpp.openshift.com" >> /etc/hosts'
   # Debug: Log that runcmd started for second VSI
   - 'echo "$(date): Second VSI runcmd section started" >> /tmp/podman-setup-debug.log'
   - 'echo "$(date): Podman cloud-init runcmd section started" >> /tmp/podman-runcmd.log'

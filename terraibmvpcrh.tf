@@ -328,7 +328,7 @@ write_files:
       # Cloud-init write_files section executed at ${timestamp()}
       # The actual date will be added by the runcmd script.
             
-  - path: /root/twingate-setup.sh
+  - path: /opt/twingate-setup.sh
     permissions: '0755'
     owner: root:root
     content: |
@@ -400,12 +400,12 @@ runcmd:
   - 'echo "$(date): Cloud-init runcmd section started" >> /var/log/twingate-install.log'
   
   # Debug: Check if twingate-setup.sh was created by write_files
-  - 'echo "$(date): Checking for /root/twingate-setup.sh..." >> /var/log/twingate-install.log'
-  - 'ls -la /root/twingate-setup.sh >> /var/log/twingate-install.log 2>&1 || echo "Setup script not found" >> /var/log/twingate-install.log'
+  - 'echo "$(date): Checking for /opt/twingate-setup.sh..." >> /var/log/twingate-install.log'
+  - 'ls -la /opt/twingate-setup.sh >> /var/log/twingate-install.log 2>&1 || echo "Setup script not found" >> /var/log/twingate-install.log'
   
   # Execute the Twingate setup script
   - 'echo "$(date): Executing twingate setup script..." >> /var/log/twingate-install.log'
-  - /root/twingate-setup.sh
+  - /opt/twingate-setup.sh
   
   # Log cloud-init completion
   - 'echo "$(date): Cloud-init runcmd section completed" >> /var/log/twingate-install.log'
@@ -413,7 +413,7 @@ runcmd:
   # Debug: Create summary of what happened
   - 'echo "$(date): === DEBUG SUMMARY ===" >> /var/log/twingate-install.log'
   - 'echo "$(date): Cloud-init user-data processing completed" >> /var/log/twingate-install.log'
-  - 'ls -la /root/twingate-setup.sh >> /var/log/twingate-install.log 2>&1 || echo "Setup script still missing" >> /var/log/twingate-install.log'
+  - 'ls -la /opt/twingate-setup.sh >> /var/log/twingate-install.log 2>&1 || echo "Setup script still missing" >> /var/log/twingate-install.log'
   - 'ls -la /tmp/cloud-init-debug.log >> /var/log/twingate-install.log 2>&1 || echo "Debug log missing" >> /var/log/twingate-install.log'
 
 final_message: "Twingate connector has been installed via Terraform cloud-init on CentOS Stream 9"
@@ -447,15 +447,15 @@ write_files:
       Podman setup write_files section prepared.
       # The actual date will be added by the runcmd script.
 
-  - path: /root/runrota.sh
+  - path: /opt/runrota.sh
     permissions: '0744'
     owner: root:root
     content: |
       # podman build -t localhost/fedora-dev:latest -f Dockerfile .
       # If need be get information below from bitwarden
-      podman run -ti -e VAULT_ADDR='' -e VAULT_TOKEN='' -e GITHUB_PAT="github_pat_***" -e REQUESTS_CA_BUNDLE="/root/ca-bundle.crt" -v /root/:/root/ --rm --replace --name rota-jimccann localhost/fedora-dev:latest tmux
+      podman run -ti -e VAULT_ADDR='' -e VAULT_TOKEN='' -e GITHUB_PAT="github_pat_***" -e REQUESTS_CA_BUNDLE="/workspace/ca-bundle.crt" -v /opt/:/workspace/ --rm --replace --name rota-jimccann localhost/fedora-dev:latest tmux
            
-  - path: /root/Dockerfile
+  - path: /opt/Dockerfile
     permissions: '0644'
     owner: root:root
     content: |
@@ -471,13 +471,13 @@ write_files:
       RUN curl -sSL https://install.python-poetry.org | python3 - && \
           ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
-      # Create root directory
-      RUN mkdir -p /root
+      # Create workspace directory
+      RUN mkdir -p /workspace
 
 
       # Copy the repository setup script (to be run at runtime with environment variable)
-      COPY setup-repos.sh /root/setup-repos.sh
-      RUN chmod +x /root/setup-repos.sh
+      COPY setup-repos.sh /workspace/setup-repos.sh
+      RUN chmod +x /workspace/setup-repos.sh
       
       # Verify installations
       RUN python3 --version && \
@@ -486,12 +486,12 @@ write_files:
           ping -c 1 -W 1 127.0.0.1 || echo "Ping test completed"
 
       # Set working directory
-      WORKDIR /root
+      WORKDIR /workspace
 
       # Set a default command
       CMD ["/bin/bash"] 
       
-  - path: /root/setup-repos.sh
+  - path: /opt/setup-repos.sh
     permissions: '0755'
     owner: root:root
     content: |
@@ -523,7 +523,7 @@ write_files:
 
       echo "Repository setup complete!"
       echo "Available repository:"
-      ls -la /root/
+      ls -la /workspace/
       
       # Clone the config repository
       if [ ! -d "config" ]; then
@@ -536,7 +536,7 @@ write_files:
       
       echo "Repository setup complete!"
       echo "Available repository:"
-      ls -la /root/
+      ls -la /workspace/
       
       # Clean up credentials for security
       rm -f ~/.git-credentials
@@ -544,23 +544,25 @@ write_files:
       
       echo "Git credentials cleaned up for security."
       mkdir -p /root/dev/repos/
-      ln -s /root/config/ /root/dev/repos/config
+      ln -s /workspace/config/ /root/dev/repos/config
 
-      echo "Make sure you have copied PEM/CRT files to /root "
+      echo "Make sure you have copied PEM/CRT files to /opt "
       cp *.pem /etc/pki/ca-trust/source/anchors/
       update-ca-trust
 
       python3 -m venv .venv
       . .venv/bin/activate
-      cd /root/infra-toolbox/apps/support-toolkit
+      cd /workspace/infra-toolbox/apps/support-toolkit
       
       poetry install --no-root
       echo "run . .venv/bin/activate"
-      echo " run ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py"
-      echo " run ./infra-toolbox/apps/support-toolkit/github/acl.py listteams"
+      echo " run cd /workspace/infra-toolbox/apps/support-toolkit"
+      echo " run ./support/xfer_secrets_from_vault_to_local_filesystem.py"
       echo "run deactivate to exit out of venv"
+      #echo "run ./infra-toolbox/apps/support-toolkit/support/xfer_secrets_from_vault_to_local_filesystem.py"
+      echo " run ./infra-toolbox/apps/support-toolkit/github/acl.py listteams"
       
-  - path: /root/podman-setup.sh
+  - path: /opt/podman-setup.sh
     permissions: '0755'
     owner: root:root
     content: |
@@ -597,19 +599,19 @@ write_files:
      
       # Create sample container configuration
       echo "$(date): Creating sample container setup..." >> "$LOG_FILE"
-      mkdir -p /root/containers
-      cat > /root/containers/hello-world.sh << 'CONTAINER_EOF'
+      mkdir -p /opt/containers
+      cat > /opt/containers/hello-world.sh << 'CONTAINER_EOF'
       #!/bin/bash
       echo "Running hello-world container with Podman..."
       podman run --rm hello-world
       CONTAINER_EOF
-      chmod +x /root/containers/hello-world.sh
+      chmod +x /opt/containers/hello-world.sh
       
       # Build the Fedora container
       echo "$(date): Building Fedora development container..." >> "$LOG_FILE"
-      if [ -f "/root/Dockerfile" ]; then
-        cd /root
-        echo "$(date): Building container from /root/Dockerfile..." >> "$LOG_FILE"
+      if [ -f "/opt/Dockerfile" ]; then
+        cd /opt
+        echo "$(date): Building container from /opt/Dockerfile..." >> "$LOG_FILE"
         podman build -t localhost/fedora-dev:latest -f Dockerfile . >> "$LOG_FILE" 2>&1
         echo "$(date): Container build completed" >> "$LOG_FILE"
         
@@ -642,12 +644,12 @@ runcmd:
   - 'echo "$(date): Podman setup runcmd section started" >> /var/log/podman-setup.log'
   
   # Debug: Check if podman-setup.sh was created by write_files
-  - 'echo "$(date): Checking for /root/podman-setup.sh..." >> /var/log/podman-setup.log'
-  - 'ls -la /root/podman-setup.sh >> /var/log/podman-setup.log 2>&1 || echo "Setup script not found" >> /var/log/podman-setup.log'
+  - 'echo "$(date): Checking for /opt/podman-setup.sh..." >> /var/log/podman-setup.log'
+  - 'ls -la /opt/podman-setup.sh >> /var/log/podman-setup.log 2>&1 || echo "Setup script not found" >> /var/log/podman-setup.log'
   
   # Execute the Podman setup script
   - 'echo "$(date): Executing podman setup script..." >> /var/log/podman-setup.log'
-  - '/root/podman-setup.sh'
+  - '/opt/podman-setup.sh'
   
   # Configure systemd resolved (conditional)
   ${var.configure_systemd_resolved ? "- 'echo \"$(date): Configuring systemd resolved...\" >> /var/log/podman-setup.log'" : "# Systemd resolved configuration disabled"}
@@ -669,7 +671,7 @@ runcmd:
   # Debug: Create summary of what happened
   - 'echo "$(date): === PODMAN SETUP SUMMARY ===" >> /var/log/podman-setup.log'
   - 'echo "$(date): Cloud-init user-data processing completed" >> /var/log/podman-setup.log'
-  - 'ls -la /root/podman-setup.sh >> /var/log/podman-setup.log 2>&1 || echo "Setup script still missing" >> /var/log/podman-setup.log'
+  - 'ls -la /opt/podman-setup.sh >> /var/log/podman-setup.log 2>&1 || echo "Setup script still missing" >> /var/log/podman-setup.log'
   - 'ls -la /tmp/podman-setup-debug.log >> /var/log/podman-setup.log 2>&1 || echo "Debug log missing" >> /var/log/podman-setup.log'
 
 final_message: "Podman has been installed and configured via Terraform cloud-init on CentOS Stream 9"
@@ -711,7 +713,7 @@ resource "ibm_is_instance" "twingate_vsi" {
   ]
 }
 
-# Create second virtual server instance (rootional, with Podman user_data)
+# Create second virtual server instance (optional, with Podman user_data)
 resource "ibm_is_instance" "second_vsi" {
   count          = var.create_second_vsi ? 1 : 0
   name           = var.second_instance_name
@@ -814,12 +816,12 @@ output "second_vsi_subnet_id" {
 
 output "twingate_install_log" {
   description = "Commands to check Twingate installation"
-  value       = var.enable_floating_ip ? "SSH: ssh root@${ibm_is_floating_ip.twingate_fip[0].address} | Check: ls -la /root/twingate-setup.sh /tmp/cloud-init-*.log | Logs: tail -f /var/log/twingate-install.log" : "SSH: ssh root@${ibm_is_instance.twingate_vsi.primary_network_interface[0].primary_ip[0].address} | Check: ls -la /root/twingate-setup.sh /tmp/cloud-init-*.log"
+  value       = var.enable_floating_ip ? "SSH: ssh root@${ibm_is_floating_ip.twingate_fip[0].address} | Check: ls -la /opt/twingate-setup.sh /tmp/cloud-init-*.log | Logs: tail -f /var/log/twingate-install.log" : "SSH: ssh root@${ibm_is_instance.twingate_vsi.primary_network_interface[0].primary_ip[0].address} | Check: ls -la /opt/twingate-setup.sh /tmp/cloud-init-*.log"
 }
 
 output "debug_commands" {
   description = "Debug commands if installation fails"
-  value       = "cloud-init status; ls -la /root/twingate-setup.sh /tmp/cloud-init-*.log; tail -20 /var/log/cloud-init-output.log"
+  value       = "cloud-init status; ls -la /opt/twingate-setup.sh /tmp/cloud-init-*.log; tail -20 /var/log/cloud-init-output.log"
 }
 
 output "floating_ip_enabled" {
@@ -889,7 +891,7 @@ output "podman_setup_log" {
 
 output "podman_debug_commands" {
   description = "Debug commands for Podman setup on second VSI"
-  value       = "podman --version; podman info; ls -la /root/containers/; tail -20 /var/log/podman-setup.log"
+  value       = "podman --version; podman info; ls -la /opt/containers/; tail -20 /var/log/podman-setup.log"
 }
 
 output "systemd_resolved_debug_commands" {

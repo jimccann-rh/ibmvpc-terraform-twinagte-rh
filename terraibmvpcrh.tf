@@ -57,6 +57,16 @@ variable "instance_profile" {
   default     = "bx2-2x8"  # 2 vCPUs, 8 GB RAM
 }
 
+variable "boot_volume_size" {
+  description = "Boot volume size in GB for the virtual server instance"
+  type        = number
+  default     = 10
+  validation {
+    condition     = var.boot_volume_size >= 10 && var.boot_volume_size <= 2000
+    error_message = "Boot volume size must be between 10 and 2000 GB."
+  }
+}
+
 variable "enable_floating_ip" {
   description = "Enable floating IP for external access to the VSI"
   type        = bool
@@ -701,7 +711,7 @@ resource "ibm_is_instance" "twingate_vsi" {
 
   boot_volume {
     name     = "${var.instance_name}-boot"
-    size     = 10
+    size     = var.boot_volume_size
   }
 
   tags = [

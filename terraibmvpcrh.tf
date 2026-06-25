@@ -699,6 +699,11 @@ resource "ibm_is_instance" "twingate_vsi" {
 
   keys = [data.ibm_is_ssh_key.ssh_key.id]
 
+  boot_volume {
+    name     = "${var.instance_name}-boot"
+    size     = 10
+  }
+
   tags = [
     "twingate",
     "connector",

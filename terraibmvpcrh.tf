@@ -173,7 +173,7 @@ data "ibm_resource_group" "resource_group" {
 }
 
 data "ibm_is_image" "os_image" {
-  name = "ibm-centos-stream-9-amd64-11"
+  name = "ibm-centos-stream-9-amd64-17"
 }
 
 data "ibm_is_ssh_key" "ssh_key" {
